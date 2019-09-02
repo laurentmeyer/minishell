@@ -15,71 +15,122 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-// #define MAXLEN 12
 
-// void 		flush_(int fildes)
-// {
-// 	ssize_t read_res;
-// 	char c;
+/* ************************************************************************** */
+/*                            BUILTINS                                        */
+/* ************************************************************************** */
+typedef int (*t_builtin)(char *);
 
-// 	while ((read_res = read(fildes, &c, 1)) && c != '\n')
-// 	{
-// 		if (read_res < 0)
-// 		{
-// 			ft_dprintf(STDERR_FILENO, "read error\n");
-// 			exit(0);
-// 		}
-// 	}
-// }
+int exit_(char *input)
+{
+	(void)input;
+	return (-1);
+}
 
-// ssize_t read_(int fildes, void *buf, size_t nbyte)
-// {
-// 	ssize_t	i;
+int echo_(char *input)
+{
+	ft_printf("%s\n", input + ft_strlen("echo "));
+	return (0);
+}
 
-// 	if ((i = read(fildes, buf, nbyte)) < 0)
-// 	{
-// 		ft_dprintf(STDERR_FILENO, "read error\n");
-// 		exit(0);
-// 	}
-// 	if (ft_strlen(buf) == MAXLEN)
-// 	{
-// 		flush_(fildes);
-// 		ft_dprintf(STDERR_FILENO, "instruction is too long\n");
-// 		exit(0);
-// 	}
-// 	return (i);
-// }
+/* ************************************************************************** */
+/*                            BINARIES                                        */
+/* ************************************************************************** */
 
-// ssize_t write_(int fildes, const void *buf, size_t nbyte)
-// {
-// 	ssize_t	i;
+extern char **environ;
 
-// 	if ((i = write(fildes, buf, nbyte)) < 0)
-// 		exit(0);
-// 	return (i);
-// }
+static char *get_env_variable(char *name)
+{
+	size_t i;
+	size_t len;
+	char *str;
 
+	i = 0;
+	len = ft_strlen(name);
+	while ((str = environ[i]))
+	{
+		if (ft_strncmp(name, str, len) == 0 && str[len] == '=')
+			return (str + len + 1);
+			i++;
+	}
+	return (NULL);
+}
+
+static char *find_binary_path(char *name)
+{
+	char **split;
+	char *res;
+	size_t i;
+
+	split = ft_strsplit(get_env_variable("PATH"), ':');
+	i = 0;
+	while (split[i])
+	{
+		if (!(res = ft_strnew(ft_strlen(split[i]) + ft_strlen(name) + 2)))
+			return (NULL);
+		ft_strcpy(res, split[i]);
+		res[ft_strlen(split[i])] = '/';
+		ft_strcpy(res + ft_strlen(split[i]) + 1, name);
+		if (access(res, X_OK) == 0)
+		{
+			ft_free_strsplit(&split);
+			return (res);
+		}
+		i++;
+		free(res);
+	}
+	ft_free_strsplit(&split);
+	ft_dprintf(STDERR_FILENO, "Could not find executable '%s'\n", name);
+	return (NULL);
+}
+
+int		execute_binary(char *input)
+{
+	char **split;
+	char *path;
+
+	split = ft_strsplit(input, ' ');
+	path = find_binary_path(split[0]);
+	if (path)
+	{
+		execve(path, split + 1, NULL);
+		free(path);
+	}
+	ft_free_strsplit(&split);
+	return (0);
+}
+
+/* ************************************************************************** */
+/*                            MAIN                                            */
+/* ************************************************************************** */
 int		handle_input(char *input)
 {
-	if (!ft_strcmp("exit", input))
-		return (-1);
-	ft_printf("%s\n", input);
+	const char *commands[] = {"exit", "echo"};
+	const t_builtin builtins[] = {&exit_, &echo_};
+	size_t i;
+
+	i = 0;
+	while (i < sizeof(commands) / sizeof(char *))
+	{
+		if (!ft_strncmp(input, commands[i], ft_strlen(commands[i])))
+			return (builtins[i](input));
+		i++;
+	}
+	execute_binary(input);
 	return (0);
 }
 
 int		main(void)
 {
 	char *input;
-	int gnl;
 	int should_exit;
 
 	input = NULL;
 	should_exit = 0;
 	while(!should_exit)
 	{
-		write(STDOUT_FILENO, "$> ", 3);
-		gnl = gnlite(STDIN_FILENO, &input);
-		if (gnl < 0 || handle_input(input) < 0)
+		ft_putstr("$> ");
+		if (gnlite(STDIN_FILENO, &input) < 0 || handle_input(input) < 0)
 			should_exit = 1;
 		if (input)
 		{

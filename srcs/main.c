@@ -193,11 +193,20 @@ int exit_(char **argv, char **envp[])
 int echo_(char **argv, char **envp[])
 {
 	size_t i;
+	int no_new_line;
 	
 	(void)envp;
-	i = 1;
+	no_new_line = ft_strequ(argv[1], "-n");
+	i = 1 + no_new_line;
+	if (argv[i])
+		ft_putstr(argv[i++]);
 	while (argv[i])
-		ft_putendl(argv[i++]); // TODO améliorer 
+	{
+		ft_putchar(' ');
+		ft_putstr(argv[i++]);
+	}
+	if (!no_new_line)
+		ft_putchar('\n');
 	return (0);
 }
 

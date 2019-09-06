@@ -235,6 +235,21 @@ int setenv_(char **argv, char ** envp[])
 	return (0);
 }
 
+int unsetenv_(char **argv, char ** envp[])
+{
+	int index;
+
+	if (!argv || !argv[0] || !argv[1] || argv[2])
+		return (-1); // FIXME: add error management
+	if ((index = get_env_variable_index(argv[1], *envp)) < 0)
+		return (-1); // FIXME: add error management
+	free(envp[0][index]);
+	envp[0][index] = envp[0][index + 1];
+	while (envp[0][++index])
+		envp[0][index] = envp[0][index + 1];
+	return (0);
+}
+
 // int cd_(char **argv)
 // {
 // 	size_t i;
@@ -312,8 +327,8 @@ int		execute_binary(char **argv, char *envp[])
 
 int		handle_input(char *input, char **envp[])
 {
-	const char *commands[] = {"exit", "echo", "setenv"}; //FIXME add cd
-	const t_builtin builtins[] = {&exit_, &echo_, &setenv_};
+	const char *commands[] = {"exit", "echo", "setenv", "unsetenv"}; //FIXME add cd
+	const t_builtin builtins[] = {&exit_, &echo_, &setenv_, &unsetenv_};
 	char **argv;
 	int i;
 

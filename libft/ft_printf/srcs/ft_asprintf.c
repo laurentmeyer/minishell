@@ -53,8 +53,8 @@ int			ft_vasprintf(char **ret, const char *format, va_list ap)
 				|| !(*ret = ft_insert_str(*ret, start, end + 1, interpret)))
 			return (ERR);
 		free(conv);
-		free(interpret);
 		len += ft_strlen(interpret);
+		free(interpret);
 	}
 	remove_double_percent(*ret);
 	len = ft_strlen(*ret);

@@ -15,11 +15,14 @@
 
 char					*ft_strndup(const char *s1, size_t n)
 {
-	char	*new;
+	char	*res;
 	size_t	i;
 
-	i = ft_strlen(s1) < n ? ft_strlen(s1) : n;
-	if ((new = (char *)malloc(n)))
-		(ft_strncpy(new, s1, i))[i] = '\0';
-	return (new);
+	i = ft_strlen(s1);
+	if (i > n)
+		i = n;
+	if (!(res = ft_strnew(i + 1)))
+		return (NULL);
+	ft_strncpy(res, s1, i);
+	return (res);
 }

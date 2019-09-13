@@ -306,7 +306,7 @@ int		execute_binary(char **argv, char *envp[])
 	pid_t pid;
 	int stat_loc;
 
-	path = find_binary_path(argv[0], envp);
+	path = access(argv[0], X_OK) ? find_binary_path(argv[0], envp) : ft_strdup(argv[0]);
 	if (path)
 	{
 		pid = fork();
